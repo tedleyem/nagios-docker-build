@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 MAINTAINER Tedley Meralus <tmeralus@gmail.com>
 
 ENV NAGIOS_HOME            /opt/nagios
@@ -6,8 +6,8 @@ ENV NAGIOS_USER            nagios
 ENV NAGIOS_GROUP           nagios
 ENV NAGIOS_CMDUSER         nagios
 ENV NAGIOS_CMDGROUP        nagios
-ENV NAGIOS_FQDN            dev.nagios.com
-ENV NAGIOSADMIN_USER       nagiosadmin
+ENV NAGIOS_FQDN            dev.nagios-example.com
+ENV NAGIOSADMIN_USER       nagios
 ENV NAGIOSADMIN_PASS       nagios
 ENV APACHE_RUN_USER        nagios
 ENV APACHE_RUN_GROUP       nagios
