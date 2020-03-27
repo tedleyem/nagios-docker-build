@@ -53,7 +53,7 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
         libldap2-dev                        \
         libmysqlclient-dev                  \
         libnagios-object-perl               \
-        libnagios-plugin-perl               \
+        libmonitoring-availability-perl     \
         libnet-snmp-perl                    \
         libnet-snmp-perl                    \
         libnet-tftp-perl                    \
