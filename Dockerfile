@@ -28,6 +28,7 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
     apt-get update && apt-get install -y    \
         apache2                             \
         apache2-utils                       \
+        apt-utils                       \
         autoconf                            \
         automake                            \
         bc                                  \
@@ -46,15 +47,11 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
         libdbd-mysql-perl                   \
         libdbi-dev                          \
         libdbi-perl                         \
-        libfreeradius-client-dev            \
-        libgd2-xpm-dev                      \
-        libgd-gd2-perl                      \
         libjson-perl                        \
         libldap2-dev                        \
         libmysqlclient-dev                  \
         libnagios-object-perl               \
         libmonitoring-availability-perl     \
-        libnet-snmp-perl                    \
         libnet-snmp-perl                    \
         libnet-tftp-perl                    \
         libnet-xmpp-perl                    \
