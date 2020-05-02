@@ -10,6 +10,27 @@ Nagios Core 4.4.5 running on Ubuntu 16.04 LTS with NagiosGraph & NRPE
 Nagios Configuration lives in /opt/nagios/etc
 NagiosGraph configuration lives in /opt/nagiosgraph/etc
 
+## Variables
+ENV NAGIOS_HOME            /opt/nagios
+ENV NAGIOS_USER            nagios
+ENV NAGIOS_GROUP           nagios
+ENV NAGIOS_CMDUSER         nagios
+ENV NAGIOS_CMDGROUP        nagios
+ENV NAGIOS_FQDN            dev.nagios-example.com
+ENV NAGIOSADMIN_USER       nagios
+ENV NAGIOSADMIN_PASS       nagios
+ENV APACHE_RUN_USER        nagios
+ENV APACHE_RUN_GROUP       nagios
+ENV NAGIOS_TIMEZONE        UTC
+ENV DEBIAN_FRONTEND        noninteractive
+ENV NG_NAGIOS_CONFIG_FILE  ${NAGIOS_HOME}/etc/nagios.cfg
+ENV NG_CGI_DIR             ${NAGIOS_HOME}/sbin
+ENV NG_WWW_DIR             ${NAGIOS_HOME}/share/nagiosgraph
+ENV NG_CGI_URL             /cgi-bin
+ENV NAGIOS_BRANCH          nagios-4.4.5
+ENV NAGIOS_PLUGINS_BRANCH  release-2.2.1
+ENV NRPE_BRANCH            nrpe-3.2.1
+
 ### Install
 
 ```sh
