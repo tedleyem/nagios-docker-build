@@ -42,7 +42,7 @@ docker pull tmeralus/nagios:latest
 Run with the example configuration with the following:
 
 ```sh
-docker run --name nagios4 -p 0.0.0.0:8080:80 tmeralus/nagios:latest
+docker run --name nagios -p 0.0.0.0:8080:80 tmeralus/nagios:latest
 ```
 
 alternatively you can use external Nagios configuration & log data with the following:
