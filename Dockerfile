@@ -248,8 +248,8 @@ RUN echo "ServerName ${NAGIOS_FQDN}" > /etc/apache2/conf-available/servername.co
     ln -s /etc/apache2/conf-available/timezone.conf /etc/apache2/conf-enabled/timezone.conf
 
 
-# Add config files from repo 
-COPY opt/nagios/etc/objects/* usr/local/nagios/etc/objects
+# Add config files from repo
+COPY overlay/opt/nagios/etc/objects/*.cfg usr/local/nagios/etc/objects/
 
 EXPOSE 80
 
