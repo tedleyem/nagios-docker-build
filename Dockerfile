@@ -3,6 +3,7 @@ MAINTAINER Tedley Meralus <tmeralus@gmail.com>
 
 ENV NAGIOS_HOME            /opt/nagios
 ENV NAGIOS_USER            nagios
+ENV DOCKER_GROUP           docker
 ENV NAGIOS_GROUP           nagios
 ENV NAGIOS_CMDUSER         nagios
 ENV NAGIOS_CMDGROUP        nagios
@@ -28,13 +29,14 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
     apt-get update && apt-get install -y    \
         apache2                             \
         apache2-utils                       \
-        apt-utils                       \
+        apt-utils                           \
         autoconf                            \
         automake                            \
         bc                                  \
         bsd-mailx                           \
         build-essential                     \
         dnsutils                            \
+        docker                              \
         fping                               \
         gettext                             \
         git                                 \
@@ -68,6 +70,8 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
         php-gd                              \
         postfix                             \
         python-pip                          \
+        python                              \
+        python3                             \
         rsyslog                             \
         runit                               \
         smbclient                           \
@@ -75,7 +79,6 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
         snmpd                               \
         snmp-mibs-downloader                \
         unzip                               \
-        python                              \
                                                 && \
     apt-get clean && rm -Rf /var/lib/apt/lists/*
 
@@ -83,6 +86,7 @@ RUN ( egrep -i "^${NAGIOS_GROUP}"    /etc/group || groupadd $NAGIOS_GROUP    )  
     ( egrep -i "^${NAGIOS_CMDGROUP}" /etc/group || groupadd $NAGIOS_CMDGROUP )
 RUN ( id -u $NAGIOS_USER    || useradd --system -d $NAGIOS_HOME -g $NAGIOS_GROUP    $NAGIOS_USER    )  && \
     ( id -u $NAGIOS_CMDUSER || useradd --system -d $NAGIOS_HOME -g $NAGIOS_CMDGROUP $NAGIOS_CMDUSER )
+RUN ( id -u $NAGIOS_USER    || usermod --system $DOCKER_GROUP $NAGIOS_USER    )
 
 RUN cd /tmp                                           && \
     git clone https://github.com/multiplay/qstat.git  && \
@@ -161,14 +165,19 @@ RUN cd /tmp                                                          && \
 RUN cd /opt                                                                         && \
     pip install pymssql                                                             && \
     git clone https://github.com/willixix/naglio-plugins.git     WL-Nagios-Plugins  && \
-    git clone https://github.com/tmeralus/nagios-plugins.git  TM-Nagios-Plugins  && \
     git clone https://github.com/justintime/nagios-plugins.git   JE-Nagios-Plugins  && \
+    git clone https://github.com/tmeralus/nagios-plugins.git  TM-Nagios-Plugins  && \
+    git clone https://github.com/timdaman/check_docker.git    TD-Nagios-Plugins && \
     git clone https://github.com/nagiosenterprises/check_mssql_collection.git   nagios-mssql  && \
     chmod +x /opt/WL-Nagios-Plugins/check*                                          && \
-    chmod +x /opt/JE-Nagios-Plugins/check_mem/check_mem.pl                          && \
-    cp /opt/JE-Nagios-Plugins/check_mem/check_mem.pl ${NAGIOS_HOME}/libexec/           && \
-    cp /opt/nagios-mssql/check_mssql_database.py ${NAGIOS_HOME}/libexec/                         && \
-    cp /opt/nagios-mssql/check_mssql_server.py ${NAGIOS_HOME}/libexec/
+    chmod +x /opt/JE-Nagios-Plugins/check*                                          && \
+    chmod +x /opt/TM-Nagios-Plugins/check*                                          && \
+    chmod +x /opt/TD-Nagios-Plugins/check*                                          && \
+    cp /opt/TD-Nagios-Plugins/check_docker/check_docker/check_docker.py ${NAGIOS_HOME}/libexec/         && \
+    cp /opt/TD-Nagios-Plugins/check_docker/check_docker/check_swarm.py ${NAGIOS_HOME}/libexec/          && \
+    cp /opt/JE-Nagios-Plugins/check_mem/check_mem.pl ${NAGIOS_HOME}/libexec/                            && \
+    cp /opt/nagios-mssql/check_mssql_database.py ${NAGIOS_HOME}/libexec/                                && \
+    cp /opt/nagios-mssql/check_mssql_server.py ${NAGIOS_HOME}/libexec/                                  && \
 
 
 RUN sed -i.bak 's/.*\=www\-data//g' /etc/apache2/envvars
@@ -236,6 +245,17 @@ RUN echo "ServerName ${NAGIOS_FQDN}" > /etc/apache2/conf-available/servername.co
     echo "PassEnv TZ" > /etc/apache2/conf-available/timezone.conf            && \
     ln -s /etc/apache2/conf-available/servername.conf /etc/apache2/conf-enabled/servername.conf    && \
     ln -s /etc/apache2/conf-available/timezone.conf /etc/apache2/conf-enabled/timezone.conf
+
+
+# Add nagios to docker group
+#RUN sudo usermod -a -G docker nagios
+
+# Copy check_docker plugins
+# https://github.com/timdaman/check_docker
+#/usr/lib/nagios/plugins
+COPY check_docker/check_docker/check_docker.py /usr/local/bin/check_docker
+COPY check_docker/check_docker/check_swarm.py /usr/local/bin/check_swarm
+RUN chmod a+rx /usr/local/bin/check_docker /usr/local/bin/check_swarm
 
 EXPOSE 80
 
