@@ -179,7 +179,7 @@ RUN cd /opt                                                                     
     cp /opt/Nagios-Docker-Plugins/check_docker/check_docker.py ${NAGIOS_HOME}/libexec/         && \
     cp /opt/Nagios-Docker-Plugins/check_docker/check_swarm.py ${NAGIOS_HOME}/libexec/          && \
     cp /opt/Nagios-Docker-Plugins/check_docker/check_docker.py /usr/local/bin/check_docker   && \
-    cp /opt/Nagios-Docker-Plugins/check_docker/check_swarm.py /usr/local/bin/check_swarm     
+    cp /opt/Nagios-Docker-Plugins/check_docker/check_swarm.py /usr/local/bin/check_swarm
 
 RUN sed -i.bak 's/.*\=www\-data//g' /etc/apache2/envvars
 RUN export DOC_ROOT="DocumentRoot $(echo $NAGIOS_HOME/share)"                         && \
@@ -247,8 +247,16 @@ RUN echo "ServerName ${NAGIOS_FQDN}" > /etc/apache2/conf-available/servername.co
     ln -s /etc/apache2/conf-available/servername.conf /etc/apache2/conf-enabled/servername.conf    && \
     ln -s /etc/apache2/conf-available/timezone.conf /etc/apache2/conf-enabled/timezone.conf
 
+
+# Add config files from repo 
+COPY opt/nagios/etc/objects/* usr/local/nagios/etc/objects
+
 EXPOSE 80
 
 VOLUME "${NAGIOS_HOME}/var" "${NAGIOS_HOME}/etc" "/var/log/apache2" "/opt/Custom-Nagios-Plugins" "/opt/nagiosgraph/var" "/opt/nagiosgraph/etc"
 
 CMD [ "/usr/local/bin/start_nagios" ]
+
+# will not run until hosts file is added
+# /usr/local/nagios/etc/objects/hosts.cfg
+# update hosts inside container. add it from the git repo
