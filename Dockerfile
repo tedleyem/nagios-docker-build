@@ -167,18 +167,19 @@ RUN cd /opt                                                                     
     git clone https://github.com/willixix/naglio-plugins.git     WL-Nagios-Plugins  && \
     git clone https://github.com/justintime/nagios-plugins.git   JE-Nagios-Plugins  && \
     git clone https://github.com/tmeralus/nagios-plugins.git  TM-Nagios-Plugins  && \
-    git clone https://github.com/timdaman/check_docker.git    TD-Nagios-Plugins && \
+    git clone https://github.com/tmeralus/check_docker.git    Nagios-Docker-Plugins && \
     git clone https://github.com/nagiosenterprises/check_mssql_collection.git   nagios-mssql  && \
     chmod +x /opt/WL-Nagios-Plugins/check*                                          && \
     chmod +x /opt/JE-Nagios-Plugins/check*                                          && \
     chmod +x /opt/TM-Nagios-Plugins/check*                                          && \
-    chmod +x /opt/TD-Nagios-Plugins/check*                                          && \
-    cp /opt/TD-Nagios-Plugins/check_docker/check_docker/check_docker.py ${NAGIOS_HOME}/libexec/         && \
-    cp /opt/TD-Nagios-Plugins/check_docker/check_docker/check_swarm.py ${NAGIOS_HOME}/libexec/          && \
+    chmod +x /opt/Nagios-Docker-Plugins/check*                                          && \
     cp /opt/JE-Nagios-Plugins/check_mem/check_mem.pl ${NAGIOS_HOME}/libexec/                            && \
     cp /opt/nagios-mssql/check_mssql_database.py ${NAGIOS_HOME}/libexec/                                && \
     cp /opt/nagios-mssql/check_mssql_server.py ${NAGIOS_HOME}/libexec/                                  && \
-
+    cp /opt/Nagios-Docker-Plugins/check_docker/check_docker.py ${NAGIOS_HOME}/libexec/         && \
+    cp /opt/Nagios-Docker-Plugins/check_docker/check_swarm.py ${NAGIOS_HOME}/libexec/          && \
+    cp /opt/Nagios-Docker-Plugins/check_docker/check_docker.py /usr/local/bin/check_docker   && \
+    cp /opt/Nagios-Docker-Plugins/check_docker/check_swarm.py /usr/local/bin/check_swarm     
 
 RUN sed -i.bak 's/.*\=www\-data//g' /etc/apache2/envvars
 RUN export DOC_ROOT="DocumentRoot $(echo $NAGIOS_HOME/share)"                         && \
@@ -245,17 +246,6 @@ RUN echo "ServerName ${NAGIOS_FQDN}" > /etc/apache2/conf-available/servername.co
     echo "PassEnv TZ" > /etc/apache2/conf-available/timezone.conf            && \
     ln -s /etc/apache2/conf-available/servername.conf /etc/apache2/conf-enabled/servername.conf    && \
     ln -s /etc/apache2/conf-available/timezone.conf /etc/apache2/conf-enabled/timezone.conf
-
-
-# Add nagios to docker group
-#RUN sudo usermod -a -G docker nagios
-
-# Copy check_docker plugins
-# https://github.com/timdaman/check_docker
-#/usr/lib/nagios/plugins
-COPY check_docker/check_docker/check_docker.py /usr/local/bin/check_docker
-COPY check_docker/check_docker/check_swarm.py /usr/local/bin/check_swarm
-RUN chmod a+rx /usr/local/bin/check_docker /usr/local/bin/check_swarm
 
 EXPOSE 80
 
