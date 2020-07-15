@@ -251,7 +251,7 @@ RUN echo "ServerName ${NAGIOS_FQDN}" > /etc/apache2/conf-available/servername.co
 #COPY overlay/opt/nagios/etc/objects/localhost.cfg usr/local/nagios/etc/objects/localhost.cfg
 COPY overlay/opt/nagios/etc/objects/*.cfg usr/local/nagios/etc/objects/
 
-EXPOSE 80
+EXPOSE 80 5666
 
 VOLUME "${NAGIOS_HOME}/var" "${NAGIOS_HOME}/etc" "/var/log/apache2" "/opt/Custom-Nagios-Plugins" "/opt/nagiosgraph/var" "/opt/nagiosgraph/etc"
 
