@@ -2,6 +2,7 @@ FROM ubuntu:18.04
 MAINTAINER Tedley Meralus <tmeralus@gmail.com>
 
 ENV NAGIOS_HOME            /opt/nagios
+ENV NAGIOS_GRAPH_HOME      /opt/nagiosgraph/var/rrd
 ENV NAGIOS_USER            nagios
 ENV DOCKER_GROUP           docker
 ENV NAGIOS_GROUP           nagios
@@ -190,6 +191,7 @@ RUN export DOC_ROOT="DocumentRoot $(echo $NAGIOS_HOME/share)"                   
 RUN mkdir -p -m 0755 /usr/share/snmp/mibs                     && \
     mkdir -p         ${NAGIOS_HOME}/etc/conf.d                && \
     mkdir -p         ${NAGIOS_HOME}/etc/monitor               && \
+    mkdir -p         ${NAGIOS_GRAPH_HOME}                     && \
     mkdir -p -m 700  ${NAGIOS_HOME}/.ssh                      && \
     chown ${NAGIOS_USER}:${NAGIOS_GROUP} ${NAGIOS_HOME}/.ssh  && \
     touch /usr/share/snmp/mibs/.foo                           && \
