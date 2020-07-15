@@ -66,6 +66,11 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
         libwww-perl                         \
         m4                                  \
         netcat                              \
+        nagios-plugins                      \
+        nagios-plugins-basic                \
+        nagios-plugins-common               \
+        nagios-plugins-contrib              \
+        nagios-plugins-standard             \
         parallel                            \
         php-cli                             \
         php-gd                              \
