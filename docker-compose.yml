@@ -8,6 +8,7 @@
 version: '3'
 services:
   nagios:
+    container_name: nagios
     image: tmeralus/nagios:latest
     volumes:
     - nagiosetc:/opt/nagios/etc
