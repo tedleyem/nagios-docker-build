@@ -1,5 +1,5 @@
 FROM ubuntu:20.04
-MAINTAINER Tedley Meralus <tmeralus@protonmail.com>
+LABEL org.opencontainers.image.authors="tmeralus@protonmail.com"
 
 ENV NAGIOS_HOME            /opt/nagios
 ENV NAGIOS_USER            nagios
@@ -161,6 +161,14 @@ RUN cd /tmp                                                                     
     make clean                                                                       && \
     cd /tmp && rm -Rf nagioscore
 
+# setup nagios config files
+COPY overlay/opt/nagios/etc/objects  ${NAGIOS_HOME}/etc/objects
+
+# setup nsca config file
+COPY overlay/etc/nsca.cfg   ${NAGIOS_HOME}/etc/nsca.cfg
+
+RUN sed -i 's/^#server_address.*/server_address=0.0.0.0/'  ${NAGIOS_HOME}/etc/nsca.cfg
+
 RUN cd /tmp                                                                                   && \
     git clone https://github.com/nagios-plugins/nagios-plugins.git -b $NAGIOS_PLUGINS_BRANCH  && \
     cd nagios-plugins                                                                         && \
@@ -179,24 +187,6 @@ RUN cd /tmp                                                                     
     chown root:root ${NAGIOS_HOME}/libexec/check_icmp                                         && \
     chmod u+s ${NAGIOS_HOME}/libexec/check_icmp                                               && \
     cd /tmp && rm -Rf nagios-plugins
-
-
-
-#RUN cd /tmp                                                 && \
-#    git clone https://github.com/NagiosEnterprises/nsca.git && \
-#    cd nsca                                                 && \
-#    git checkout $NSCA_TAG                                  && \
-#    ./configure                                                \
-#        --prefix=${NAGIOS_HOME}                                \
-#        --with-nsca-user=${NAGIOS_USER}                        \
-#        --with-nsca-grp=${NAGIOS_GROUP}                     && \
-#    make all                                                && \
-#    cp src/nsca ${NAGIOS_HOME}/bin/                         && \
-#    cp src/send_nsca ${NAGIOS_HOME}/bin/                    && \
-#    cp sample-config/nsca.cfg ${NAGIOS_HOME}/etc/           && \
-#    cp sample-config/send_nsca.cfg ${NAGIOS_HOME}/etc/      && \
-#    sed -i 's/^#server_address.*/server_address=0.0.0.0/'  ${NAGIOS_HOME}/etc/nsca.cfg && \
-#    cd /tmp && rm -Rf nsca
 
 RUN cd /tmp                                                          && \
     git clone https://git.code.sf.net/p/nagiosgraph/git nagiosgraph  && \
@@ -268,9 +258,7 @@ ADD overlay /
 
 RUN echo "use_timezone=${NAGIOS_TIMEZONE}" >> ${NAGIOS_HOME}/etc/nagios.cfg
 
-
 # Copy example config in-case the user has started with empty var or etc
-
 RUN mkdir -p /orig/var                     && \
     mkdir -p /orig/etc                     && \
     mkdir -p /orig/graph-etc                     && \
@@ -279,11 +267,6 @@ RUN mkdir -p /orig/var                     && \
     cp -Rp ${NAGIOS_HOME}/etc/* /orig/etc/ && \
     cp -Rp /opt/nagiosgraph/etc/* /orig/graph-etc && \
     cp -Rp /opt/nagiosgraph/var/* /orig/graph-var
-
-# setup nsca config file
-COPY overlay/etc/nsca.cfg   ${NAGIOS_HOME}/etc/nsca.cfg
-
-RUN sed -i 's/^#server_address.*/server_address=0.0.0.0/'  ${NAGIOS_HOME}/etc/nsca.cfg
 
 ## Set the permissions for example config
 RUN find /opt/nagios/etc \! -user ${NAGIOS_USER} -exec chown ${NAGIOS_USER}:${NAGIOS_GROUP} '{}' + && \
