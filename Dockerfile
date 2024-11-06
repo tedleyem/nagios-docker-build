@@ -1,10 +1,8 @@
-FROM ubuntu:18.04
-MAINTAINER Tedley Meralus <tmeralus@gmail.com>
+FROM ubuntu:20.04
+MAINTAINER Tedley Meralus <tmeralus@protonmail.com>
 
 ENV NAGIOS_HOME            /opt/nagios
-ENV NAGIOS_GRAPH_HOME      /opt/nagiosgraph/var/rrd
 ENV NAGIOS_USER            nagios
-ENV DOCKER_GROUP           docker
 ENV NAGIOS_GROUP           nagios
 ENV NAGIOS_CMDUSER         nagios
 ENV NAGIOS_CMDGROUP        nagios
@@ -19,25 +17,28 @@ ENV NG_NAGIOS_CONFIG_FILE  ${NAGIOS_HOME}/etc/nagios.cfg
 ENV NG_CGI_DIR             ${NAGIOS_HOME}/sbin
 ENV NG_WWW_DIR             ${NAGIOS_HOME}/share/nagiosgraph
 ENV NG_CGI_URL             /cgi-bin
-ENV NAGIOS_BRANCH          nagios-4.4.6
-ENV NAGIOS_PLUGINS_BRANCH  release-2.2.1
-ENV NRPE_BRANCH            nrpe-3.2.1
+ENV NAGIOS_BRANCH          nagios-4.5.7
+ENV NAGIOS_PLUGINS_BRANCH  release-2.4.12
+#ENV NRPE_BRANCH            nrpe-4.1.0
+#ENV NCPA_BRANCH            v3.1.1
+ENV NSCA_BRANCH            nsca-2.10.2
+ENV NAGIOSTV_VERSION       0.9.2
 
 
 RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set-selections  && \
     echo postfix postfix/mynetworks string "127.0.0.0/8" | debconf-set-selections            && \
-    echo postfix postfix/mailname string ${NAGIOS_FQDN} | debconf-set-selections             && \
-    apt-get update && apt-get install -y    \
+    echo postfix postfix/mailname string ${NAGIOS_FQDN} | debconf-set-selections
+
+RUN apt clean && rm -Rf /var/lib/apt/lists/*                                                 && \
+    apt update && apt install -y            \
         apache2                             \
         apache2-utils                       \
-        apt-utils                           \
         autoconf                            \
         automake                            \
         bc                                  \
         bsd-mailx                           \
         build-essential                     \
         dnsutils                            \
-        docker                              \
         fping                               \
         gettext                             \
         git                                 \
@@ -47,37 +48,53 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
         libapache2-mod-php                  \
         libcache-memcached-perl             \
         libcgi-pm-perl                      \
+        libcrypt-des-perl                   \
+        libcrypt-rijndael-perl              \
+        libcrypt-x509-perl                  \
         libdbd-mysql-perl                   \
+        libdbd-pg-perl                      \
         libdbi-dev                          \
         libdbi-perl                         \
+        libdigest-hmac-perl                 \
+        libfreeradius-dev                   \
+        libgdchart-gd2-xpm-dev              \
+        libgd-gd2-perl                      \
         libjson-perl                        \
         libldap2-dev                        \
-        libmysqlclient-dev                  \
+        libmonitoring-plugin-perl           \
+        libmariadb-dev                      \
         libnagios-object-perl               \
-        libmonitoring-availability-perl     \
+        libnet-snmp-perl                    \
         libnet-snmp-perl                    \
         libnet-tftp-perl                    \
         libnet-xmpp-perl                    \
         libpq-dev                           \
+        libradsec-dev                       \
         libredis-perl                       \
         librrds-perl                        \
         libssl-dev                          \
         libswitch-perl                      \
+        libtext-glob-perl                   \
         libwww-perl                         \
         m4                                  \
-        netcat                              \
-        nagios-plugins                      \
-        nagios-plugins-basic                \
-        nagios-plugins-common               \
-        nagios-plugins-contrib              \
-        nagios-plugins-standard             \
+        nagios-nrpe-plugin                  \
+        nagios-nrpe-server                  \
+        netcat-traditional                  \
+        nrpe-ng                             \
+        nsca                                \
+        nsca-client                         \
         parallel                            \
         php-cli                             \
         php-gd                              \
         postfix                             \
-        python-pip                          \
-        python                              \
         python3                             \
+        python3-venv                        \
+        python3-pip                         \
+        python3-nagiosplugin                \
+        python3-nagiosplugin                \
+        python3-pynag               	    \
+        pynag			                	\
+        rsync                               \
         rsyslog                             \
         runit                               \
         smbclient                           \
@@ -86,13 +103,33 @@ RUN echo postfix postfix/main_mailer_type string "'Internet Site'" | debconf-set
         snmp-mibs-downloader                \
         unzip                               \
                                                 && \
-    apt-get clean && rm -Rf /var/lib/apt/lists/*
+    apt clean && rm -Rf /var/lib/apt/lists/*
+
+RUN wget -qO - https://repo.nagios.com/GPG-KEY-NAGIOS-V3 | apt-key add -
+
+RUN echo "deb https://repo.nagios.com/deb/focal /" > /etc/apt/sources.list.d/nagios.list     && \
+    apt update && apt install -y wget
+
+RUN apt clean && rm -Rf /var/lib/apt/lists/*                                                 && \
+    apt update && apt install -y            \
+        libnagios-object-perl               \
+        nagios-nrpe-plugin                  \
+        nagios-nrpe-server                  \
+        nrpe-ng                             \
+        nsca                                \
+        nsca-client                         \
+        python3-nagiosplugin                \
+        python3-nagiosplugin                \
+        python3-pynag               	    \
+        pynag			                	\
+                                                && \
+    apt clean && rm -Rf /var/lib/apt/lists/*
+
 
 RUN ( egrep -i "^${NAGIOS_GROUP}"    /etc/group || groupadd $NAGIOS_GROUP    )                         && \
     ( egrep -i "^${NAGIOS_CMDGROUP}" /etc/group || groupadd $NAGIOS_CMDGROUP )
 RUN ( id -u $NAGIOS_USER    || useradd --system -d $NAGIOS_HOME -g $NAGIOS_GROUP    $NAGIOS_USER    )  && \
     ( id -u $NAGIOS_CMDUSER || useradd --system -d $NAGIOS_HOME -g $NAGIOS_CMDGROUP $NAGIOS_CMDUSER )
-RUN ( id -u $NAGIOS_USER    || usermod --system $DOCKER_GROUP $NAGIOS_USER    )
 
 RUN cd /tmp                                           && \
     git clone https://github.com/multiplay/qstat.git  && \
@@ -131,29 +168,35 @@ RUN cd /tmp                                                                     
     ./configure                                                 \
         --prefix=${NAGIOS_HOME}                                 \
         --with-ipv6                                             \
-        --with-ping6-command="/bin/ping6 -n -U -W %d -c %d %s"  \
+        --with-ping-command="/usr/bin/ping -n -U -W %d -c %d %s"  \
+        --with-ping6-command="/usr/bin/ping -6 -n -U -W %d -c %d %s"  \
                                                                                               && \
     make                                                                                      && \
     make install                                                                              && \
     make clean                                                                                && \
     mkdir -p /usr/lib/nagios/plugins                                                          && \
     ln -sf ${NAGIOS_HOME}/libexec/utils.pm /usr/lib/nagios/plugins                            && \
+    chown root:root ${NAGIOS_HOME}/libexec/check_icmp                                         && \
+    chmod u+s ${NAGIOS_HOME}/libexec/check_icmp                                               && \
     cd /tmp && rm -Rf nagios-plugins
 
-RUN wget -O ${NAGIOS_HOME}/libexec/check_ncpa.py https://raw.githubusercontent.com/NagiosEnterprises/ncpa/v2.0.5/client/check_ncpa.py  && \
-    chmod +x ${NAGIOS_HOME}/libexec/check_ncpa.py
 
-RUN cd /tmp                                                                  && \
-    git clone https://github.com/NagiosEnterprises/nrpe.git -b $NRPE_BRANCH  && \
-    cd nrpe                                                                  && \
-    ./configure                                   \
-        --with-ssl=/usr/bin/openssl               \
-        --with-ssl-lib=/usr/lib/x86_64-linux-gnu  \
-                                                                             && \
-    make check_nrpe                                                          && \
-    cp src/check_nrpe ${NAGIOS_HOME}/libexec/                                && \
-    make clean                                                               && \
-    cd /tmp && rm -Rf nrpe
+
+#RUN cd /tmp                                                 && \
+#    git clone https://github.com/NagiosEnterprises/nsca.git && \
+#    cd nsca                                                 && \
+#    git checkout $NSCA_TAG                                  && \
+#    ./configure                                                \
+#        --prefix=${NAGIOS_HOME}                                \
+#        --with-nsca-user=${NAGIOS_USER}                        \
+#        --with-nsca-grp=${NAGIOS_GROUP}                     && \
+#    make all                                                && \
+#    cp src/nsca ${NAGIOS_HOME}/bin/                         && \
+#    cp src/send_nsca ${NAGIOS_HOME}/bin/                    && \
+#    cp sample-config/nsca.cfg ${NAGIOS_HOME}/etc/           && \
+#    cp sample-config/send_nsca.cfg ${NAGIOS_HOME}/etc/      && \
+#    sed -i 's/^#server_address.*/server_address=0.0.0.0/'  ${NAGIOS_HOME}/etc/nsca.cfg && \
+#    cd /tmp && rm -Rf nsca
 
 RUN cd /tmp                                                          && \
     git clone https://git.code.sf.net/p/nagiosgraph/git nagiosgraph  && \
@@ -169,23 +212,31 @@ RUN cd /tmp                                                          && \
     cd /tmp && rm -Rf nagiosgraph
 
 RUN cd /opt                                                                         && \
-    pip install pymssql                                                             && \
+    pip install pymssql paho-mqtt                           && \
     git clone https://github.com/willixix/naglio-plugins.git     WL-Nagios-Plugins  && \
+    git clone https://github.com/JasonRivers/nagios-plugins.git  JR-Nagios-Plugins  && \
     git clone https://github.com/justintime/nagios-plugins.git   JE-Nagios-Plugins  && \
-    git clone https://github.com/tmeralus/nagios-plugins.git  TM-Nagios-Plugins  && \
-    git clone https://github.com/tmeralus/check_docker.git    Nagios-Docker-Plugins && \
     git clone https://github.com/nagiosenterprises/check_mssql_collection.git   nagios-mssql  && \
+    git clone https://github.com/jpmens/check-mqtt.git           jpmens-mqtt        && \
+    git clone https://github.com/danfruehauf/nagios-plugins.git  DF-Nagios-Plugins  && \
     chmod +x /opt/WL-Nagios-Plugins/check*                                          && \
-    chmod +x /opt/JE-Nagios-Plugins/check*                                          && \
-    chmod +x /opt/TM-Nagios-Plugins/check*                                          && \
-    chmod +x /opt/Nagios-Docker-Plugins/check*                                          && \
-    cp /opt/JE-Nagios-Plugins/check_mem/check_mem.pl ${NAGIOS_HOME}/libexec/                            && \
-    cp /opt/nagios-mssql/check_mssql_database.py ${NAGIOS_HOME}/libexec/                                && \
-    cp /opt/nagios-mssql/check_mssql_server.py ${NAGIOS_HOME}/libexec/                                  && \
-    cp /opt/Nagios-Docker-Plugins/check_docker/check_docker.py ${NAGIOS_HOME}/libexec/         && \
-    cp /opt/Nagios-Docker-Plugins/check_docker/check_swarm.py ${NAGIOS_HOME}/libexec/          && \
-    cp /opt/Nagios-Docker-Plugins/check_docker/check_docker.py /usr/local/bin/check_docker   && \
-    cp /opt/Nagios-Docker-Plugins/check_docker/check_swarm.py /usr/local/bin/check_swarm
+    chmod +x /opt/JE-Nagios-Plugins/check_mem/check_mem.pl                          && \
+    chmod +x /opt/jpmens-mqtt/check-mqtt.py                                         && \
+    chmod +x /opt/DF-Nagios-Plugins/check_sql/check_sql                             && \
+    chmod +x /opt/DF-Nagios-Plugins/check_jenkins/check_jenkins                     && \
+    chmod +x /opt/DF-Nagios-Plugins/check_vpn/check_vpn                             && \
+    cp /opt/JE-Nagios-Plugins/check_mem/check_mem.pl ${NAGIOS_HOME}/libexec/        && \
+    cp /opt/nagios-mssql/check_mssql_database.py ${NAGIOS_HOME}/libexec/            && \
+    cp /opt/nagios-mssql/check_mssql_server.py ${NAGIOS_HOME}/libexec/              && \
+    cp /opt/jpmens-mqtt/check-mqtt.py ${NAGIOS_HOME}/libexec/                       && \
+    cp /opt/DF-Nagios-Plugins/check_sql/check_sql ${NAGIOS_HOME}/libexec/           && \
+    cp /opt/DF-Nagios-Plugins/check_jenkins/check_jenkins ${NAGIOS_HOME}/libexec/   && \
+    cp /opt/DF-Nagios-Plugins/check_vpn/check_vpn ${NAGIOS_HOME}/libexec/
+
+RUN cd /tmp && \
+    wget https://github.com/chriscareycode/nagiostv-react/releases/download/v${NAGIOSTV_VERSION}/nagiostv-${NAGIOSTV_VERSION}.tar.gz && \
+    tar xf nagiostv-${NAGIOSTV_VERSION}.tar.gz -C /opt/nagios/share/ && \
+    rm /tmp/nagiostv-${NAGIOSTV_VERSION}.tar.gz
 
 RUN sed -i.bak 's/.*\=www\-data//g' /etc/apache2/envvars
 RUN export DOC_ROOT="DocumentRoot $(echo $NAGIOS_HOME/share)"                         && \
@@ -196,7 +247,6 @@ RUN export DOC_ROOT="DocumentRoot $(echo $NAGIOS_HOME/share)"                   
 RUN mkdir -p -m 0755 /usr/share/snmp/mibs                     && \
     mkdir -p         ${NAGIOS_HOME}/etc/conf.d                && \
     mkdir -p         ${NAGIOS_HOME}/etc/monitor               && \
-    mkdir -p         ${NAGIOS_GRAPH_HOME}                     && \
     mkdir -p -m 700  ${NAGIOS_HOME}/.ssh                      && \
     chown ${NAGIOS_USER}:${NAGIOS_GROUP} ${NAGIOS_HOME}/.ssh  && \
     touch /usr/share/snmp/mibs/.foo                           && \
@@ -218,11 +268,26 @@ ADD overlay /
 
 RUN echo "use_timezone=${NAGIOS_TIMEZONE}" >> ${NAGIOS_HOME}/etc/nagios.cfg
 
+
 # Copy example config in-case the user has started with empty var or etc
 
-RUN mkdir -p /orig/var && mkdir -p /orig/etc  && \
-    cp -Rp ${NAGIOS_HOME}/var/* /orig/var/       && \
-    cp -Rp ${NAGIOS_HOME}/etc/* /orig/etc/
+RUN mkdir -p /orig/var                     && \
+    mkdir -p /orig/etc                     && \
+    mkdir -p /orig/graph-etc                     && \
+    mkdir -p /orig/graph-var                     && \
+    cp -Rp ${NAGIOS_HOME}/var/* /orig/var/ && \
+    cp -Rp ${NAGIOS_HOME}/etc/* /orig/etc/ && \
+    cp -Rp /opt/nagiosgraph/etc/* /orig/graph-etc && \
+    cp -Rp /opt/nagiosgraph/var/* /orig/graph-var
+
+# setup nsca config file
+COPY overlay/etc/nsca.cfg   ${NAGIOS_HOME}/etc/nsca.cfg
+
+RUN sed -i 's/^#server_address.*/server_address=0.0.0.0/'  ${NAGIOS_HOME}/etc/nsca.cfg
+
+## Set the permissions for example config
+RUN find /opt/nagios/etc \! -user ${NAGIOS_USER} -exec chown ${NAGIOS_USER}:${NAGIOS_GROUP} '{}' + && \
+    find /orig/etc \! -user ${NAGIOS_USER} -exec chown ${NAGIOS_USER}:${NAGIOS_GROUP} '{}' +
 
 RUN a2enmod session         && \
     a2enmod session_cookie  && \
@@ -243,7 +308,10 @@ RUN cd /opt/nagiosgraph/etc && \
 RUN rm /opt/nagiosgraph/etc/fix-nagiosgraph-multiple-selection.sh
 
 # enable all runit services
-RUN ln -s /etc/sv/* /etc/service
+RUN ln -sf /etc/sv/* /etc/service
+
+# fix ping permissions for nagios user
+RUN chmod u+s /usr/bin/ping
 
 ENV APACHE_LOCK_DIR /var/run
 ENV APACHE_LOG_DIR /var/log/apache2
@@ -254,16 +322,8 @@ RUN echo "ServerName ${NAGIOS_FQDN}" > /etc/apache2/conf-available/servername.co
     ln -s /etc/apache2/conf-available/servername.conf /etc/apache2/conf-enabled/servername.conf    && \
     ln -s /etc/apache2/conf-available/timezone.conf /etc/apache2/conf-enabled/timezone.conf
 
-# Add config files from repo
-#COPY overlay/opt/nagios/etc/objects/localhost.cfg usr/local/nagios/etc/objects/localhost.cfg
-COPY overlay/opt/nagios/etc/objects/*.cfg usr/local/nagios/etc/objects/
-
-EXPOSE 80 5666
+EXPOSE 80 5667
 
 VOLUME "${NAGIOS_HOME}/var" "${NAGIOS_HOME}/etc" "/var/log/apache2" "/opt/Custom-Nagios-Plugins" "/opt/nagiosgraph/var" "/opt/nagiosgraph/etc"
 
 CMD [ "/usr/local/bin/start_nagios" ]
-
-# will not run until hosts file is added
-# /usr/local/nagios/etc/objects/hosts.cfg
-# update hosts inside container. add it from the git repo
